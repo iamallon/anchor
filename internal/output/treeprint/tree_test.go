@@ -13,7 +13,7 @@ import (
 func TestGenerateWithDir(t *testing.T) {
 	t.Parallel()
 
-	want := ".anchor\n"
+	want := "anchor\n"
 	got := treeprint.Generate(fstest.MapFS{
 		"git": {
 			Mode: fs.ModeDir,
@@ -28,7 +28,7 @@ func TestGenerateWithDir(t *testing.T) {
 func TestGenerateEmpty(t *testing.T) {
 	t.Parallel()
 
-	want := ".anchor\n"
+	want := "anchor\n"
 	got := treeprint.Generate(fstest.MapFS{})
 
 	if diff := cmp.Diff(got, want); diff != "" {

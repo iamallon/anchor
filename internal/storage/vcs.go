@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -38,8 +37,6 @@ func (storage *gitStorage) Init(args ...string) error {
 	if len(args) == 0 {
 		return ErrInvalidURL
 	}
-
-	fmt.Println(storage.path)
 
 	_, err := git.PlainClone(storage.path, false, &git.CloneOptions{
 		URL:  args[0],

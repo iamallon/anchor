@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/loghinalexandru/anchor/internal/output"
 	"github.com/loghinalexandru/anchor/internal/output/bubbletea"
@@ -58,7 +59,7 @@ func (v *viewCmd) manifest(parent *ff.FlagSet) *ff.Command {
 }
 
 func (v *viewCmd) handle(ctx appContext, _ []string) (err error) {
-	fh, err := label.OpenFuzzy(ctx.path, v.labels, os.O_RDWR)
+	fh, err := label.OpenFuzzy(config.DataDirPath(), v.labels, os.O_RDWR)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
 	"github.com/loghinalexandru/anchor/internal/command/util/parser"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/peterbourgon/ff/v4"
 )
@@ -65,7 +66,7 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 		return err
 	}
 
-	file, err := label.Open(ctx.path, add.labels, os.O_APPEND|os.O_CREATE|os.O_RDWR)
+	file, err := label.Open(config.DataDirPath(), add.labels, os.O_APPEND|os.O_CREATE|os.O_RDWR)
 	if err != nil {
 		return err
 	}

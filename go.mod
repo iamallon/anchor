@@ -3,6 +3,7 @@ module github.com/loghinalexandru/anchor
 go 1.21.0
 
 require (
+	github.com/adrg/xdg v0.4.0
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.10.0

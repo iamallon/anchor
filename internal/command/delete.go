@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/output"
 	"github.com/peterbourgon/ff/v4"
 )
@@ -46,5 +47,5 @@ func (del *deleteCmd) handle(ctx appContext, _ []string) (err error) {
 		return nil
 	}
 
-	return label.Remove(ctx.path, del.labels)
+	return label.Remove(config.DataDirPath(), del.labels)
 }
