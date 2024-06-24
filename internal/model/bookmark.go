@@ -135,11 +135,7 @@ func (b *Bookmark) fetchTitle() string {
 }
 
 func (b *Bookmark) String() string {
-	if b.comment != "" {
-		return fmt.Sprintf("%q %q %q\n", b.title, b.url, b.comment)
-	}
-
-	return fmt.Sprintf("%q %q\n", b.title, b.url)
+	return fmt.Sprintf("%q %q %q\n", b.title, b.url, b.comment)
 }
 
 func (b *Bookmark) Write(rw io.ReadWriteSeeker) error {
@@ -153,7 +149,7 @@ func (b *Bookmark) Write(rw io.ReadWriteSeeker) error {
 		return err
 	}
 
-	exp := regexp.MustCompile(fmt.Sprintf(`(?im)\s.%s.$`, regexp.QuoteMeta(b.url)))
+	exp := regexp.MustCompile(fmt.Sprintf(`(?im)\s.%s.[\s|$]`, regexp.QuoteMeta(b.url)))
 	if exp.Match(content) {
 		return fmt.Errorf("%s: %w", b.url, ErrDuplicateBookmark)
 	}

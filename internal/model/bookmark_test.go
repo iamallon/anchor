@@ -97,12 +97,12 @@ func TestString(t *testing.T) {
 		{
 			title: "Test Title",
 			url:   "https://google.com",
-			want:  "\"Test Title\" \"https://google.com\"\n",
+			want:  "\"Test Title\" \"https://google.com\" \"\"\n",
 		},
 		{
 			title: `Test "Title" "Test Title Two`,
 			url:   "https://google.com",
-			want:  "\"Test \\\"Title\\\" \\\"Test Title Two\" \"https://google.com\"\n",
+			want:  "\"Test \\\"Title\\\" \\\"Test Title Two\" \"https://google.com\" \"\"\n",
 		},
 	}
 
@@ -178,7 +178,7 @@ func TestWrite(t *testing.T) {
 	}
 
 	title := "test-title \\n \"test\" asd"
-	want := "\"test-title \\\\n \\\"test\\\" asd\" \"https://google.com\"\n"
+	want := "\"test-title \\\\n \\\"test\\\" asd\" \"https://google.com\" \"\"\n"
 	bk, err := NewBookmark("https://google.com", WithTitle(title))
 	if err != nil {
 		t.Fatalf("unexpected error; got %q", err)
