@@ -125,7 +125,7 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 
 	switch msg.String() {
 	case "enter", " ":
-		_ = open(item.Description())
+		_ = open(item.URL())
 	case "d", "delete":
 		var cmd tea.Cmd
 		items := slices.DeleteFunc(v.bookmarks.Items(), func(item list.Item) bool {

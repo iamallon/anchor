@@ -26,24 +26,29 @@ const (
   to do so, it will store the entry with same title as the URL. You can provide a specific
   title with the flag -t and it overwrites the behaviour mentioned above.
 
+  You can also provider a comment via the flag -c for the bookmark instead of the default URL that is specified. 
+
 EXAMPLES
   # Append to default label
   anchor add "https://www.youtube.com/"
 
   # Append to a label "programming" with a sub-label "go"
   anchor add -l programming -l go "https://gobyexample.com/"
+  anchor add -l go "https://go.dev/ref/spec" -c "GO: Language Spec"
 `
 )
 
 type addCmd struct {
-	labels []string
-	title  string
+	labels  []string
+	title   string
+	comment string
 }
 
 func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags := ff.NewFlagSet("add").SetParent(parent)
 	flags.StringSetVar(&add.labels, 'l', "label", "add labels in order of appearance")
 	flags.StringVar(&add.title, 't', "title", "", "add custom title")
+	flags.StringVar(&add.comment, 'c', "comment", "", "add bookmark comment")
 
 	return &ff.Command{
 		Name:      addName,
@@ -61,7 +66,8 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 	b, err := model.NewBookmark(
 		parser.First(args),
 		model.WithTitle(add.title),
-		model.WithClient(ctx.client))
+		model.WithClient(ctx.client),
+		model.WithComment(add.comment))
 	if err != nil {
 		return err
 	}

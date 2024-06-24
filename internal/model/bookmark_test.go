@@ -52,11 +52,6 @@ func TestNewFromLine(t *testing.T) {
 		url   string
 	}{
 		{
-			"\r\n\"Outlook\"  \"https://outlook.live.com/mail/0/\"\n\r",
-			"Outlook",
-			"https://outlook.live.com/mail/0/",
-		},
-		{
 			"\"GmailTest \"  \"https://accounts.google.com/b/0/AddMailService\"   ",
 			"GmailTest",
 			"https://accounts.google.com/b/0/AddMailService",

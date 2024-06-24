@@ -18,9 +18,10 @@ var (
 )
 
 type Bookmark struct {
-	title  string
-	url    string
-	client *http.Client
+	title   string
+	url     string
+	comment string
+	client  *http.Client
 }
 
 func NewBookmark(rawURL string, opts ...func(*Bookmark)) (*Bookmark, error) {
@@ -48,7 +49,7 @@ func NewBookmark(rawURL string, opts ...func(*Bookmark)) (*Bookmark, error) {
 func WithTitle(title string) func(*Bookmark) {
 	return func(b *Bookmark) {
 		if title != "" {
-			b.title = title
+			b.title = strings.TrimSpace(title)
 		}
 	}
 }
@@ -57,6 +58,14 @@ func WithClient(client *http.Client) func(*Bookmark) {
 	return func(b *Bookmark) {
 		if client != nil {
 			b.client = client
+		}
+	}
+}
+
+func WithComment(comment string) func(*Bookmark) {
+	return func(b *Bookmark) {
+		if comment != "" {
+			b.comment = strings.TrimSpace(comment)
 		}
 	}
 }
@@ -75,17 +84,19 @@ func BookmarkLine(line string) (*Bookmark, error) {
 		return !quoted && curr == ' '
 	})
 
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return nil, ErrInvalidBookmark
 	}
 
 	name, _ := strconv.Unquote(parts[0])
 	rawURL, _ := strconv.Unquote(parts[1])
 
-	return &Bookmark{
-		title: strings.TrimSpace(name),
-		url:   strings.TrimSpace(rawURL),
-	}, nil
+	var comment string
+	if len(parts) > 2 {
+		comment, _ = strconv.Unquote(parts[2])
+	}
+
+	return NewBookmark(rawURL, WithTitle(name), WithComment(comment))
 }
 
 var titleRegexp = regexp.MustCompile(`<title>(?P<title>.+?)</title>`)
@@ -124,6 +135,10 @@ func (b *Bookmark) fetchTitle() string {
 }
 
 func (b *Bookmark) String() string {
+	if b.comment != "" {
+		return fmt.Sprintf("%q %q %q\n", b.title, b.url, b.comment)
+	}
+
 	return fmt.Sprintf("%q %q\n", b.title, b.url)
 }
 
@@ -156,6 +171,14 @@ func (b *Bookmark) Title() string {
 }
 
 func (b *Bookmark) Description() string {
+	if b.comment == "" {
+		return b.url
+	}
+
+	return b.comment
+}
+
+func (b *Bookmark) URL() string {
 	return b.url
 }
 
