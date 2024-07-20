@@ -29,7 +29,7 @@ EXAMPLES
   # View bookmarks under label "programming"
   anchor view -l programming
 
-  # View bookmarks with sub-label go under label "programming"
+  # View bookmarks with sub-label "go" under label "programming"
   anchor view -l programming -l go
 `
 )
@@ -86,12 +86,15 @@ func (v *viewCmd) handle(ctx appContext, _ []string) (err error) {
 	}
 
 	view := state.(*bubbletea.View)
+	if !view.Dirty() {
+		return nil
+	}
+
 	confirmer := output.Confirmer{
 		MaxRetries: 3,
 		Renderer:   style.Prompt,
 	}
-
-	if view.Dirty() && !confirmer.Confirm(msgApplyChanges, os.Stdin, os.Stdout) {
+	if !confirmer.Confirm(msgApplyChanges, os.Stdin, os.Stdout) {
 		return nil
 	}
 
