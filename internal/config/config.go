@@ -2,7 +2,7 @@ package config
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/adrg/xdg"
@@ -10,7 +10,6 @@ import (
 
 const (
 	StdDirName        = "anchor"
-	StdConfigPath     = "anchor/config.yaml"
 	StdStorageKey     = "storage"
 	StdSyncModeKey    = "sync"
 	StdHttpTimeout    = 3 * time.Second
@@ -21,7 +20,7 @@ const (
 )
 
 func SettingsFilePath() string {
-	config, err := xdg.ConfigFile(StdConfigPath)
+	config, err := xdg.ConfigFile(filepath.Join(StdDirName, "config.yaml"))
 	if err != nil {
 		panic("Cannot open config path")
 	}
@@ -30,5 +29,5 @@ func SettingsFilePath() string {
 }
 
 func DataDirPath() string {
-	return path.Join(xdg.DataHome, StdDirName)
+	return filepath.Join(xdg.DataHome, StdDirName, "data")
 }
