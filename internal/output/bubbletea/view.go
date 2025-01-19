@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"slices"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,6 +16,15 @@ import (
 
 const (
 	msgStatus = "Deleted %q"
+)
+
+var (
+	quitKey    = key.NewBinding(key.WithKeys("esc", "q"))
+	confirmKey = key.NewBinding(key.WithKeys("enter", " "))
+	delKey     = key.NewBinding(key.WithKeys("d", "delete"))
+	renameKey  = key.NewBinding(key.WithKeys("r"))
+	startKey   = key.NewBinding(key.WithKeys("home"))
+	endKey     = key.NewBinding(key.WithKeys("end"))
 )
 
 type View struct {
@@ -30,8 +40,12 @@ func NewView(bookmarks []list.Item, title string) *View {
 	viewList := list.New(bookmarks, del, 0, 0)
 	style.ApplyToList(title, &viewList)
 
+	input := textinput.New()
+	input.KeyMap.LineStart = startKey
+	input.KeyMap.LineEnd = endKey
+
 	return &View{
-		input:     textinput.New(),
+		input:     input,
 		bookmarks: viewList,
 	}
 }
@@ -101,8 +115,7 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (v *View) handleInput(msg tea.KeyMsg) (textinput.Model, tea.Cmd) {
-	switch msg.String() {
-	case "enter", "esc", "q":
+	if key.Matches(msg, quitKey) || key.Matches(msg, confirmKey) {
 		item := v.bookmarks.SelectedItem().(*model.Bookmark)
 		if v.input.Value() != item.Title() {
 			item.Update(v.input.Value())
@@ -123,10 +136,10 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 		return v.bookmarks.Update(msg)
 	}
 
-	switch msg.String() {
-	case "enter", " ":
+	switch {
+	case key.Matches(msg, confirmKey):
 		_ = open(item.URL())
-	case "d", "delete":
+	case key.Matches(msg, delKey):
 		var cmd tea.Cmd
 		items := slices.DeleteFunc(v.bookmarks.Items(), func(item list.Item) bool {
 			return item == v.bookmarks.SelectedItem()
@@ -138,7 +151,7 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 		}
 
 		return v.bookmarks, cmd
-	case "r":
+	case key.Matches(msg, renameKey):
 		v.input.SetValue(item.Title())
 		v.input.Focus()
 		return v.bookmarks, textinput.Blink
