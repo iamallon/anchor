@@ -3,13 +3,15 @@ package command
 import (
 	"context"
 	"errors"
-	"os"
-
+	"github.com/gocolly/colly/v2"
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
 	"github.com/loghinalexandru/anchor/internal/command/util/parser"
 	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/peterbourgon/ff/v4"
+	"os"
+	"path"
+	"strings"
 )
 
 const (
@@ -42,6 +44,7 @@ type addCmd struct {
 	labels  []string
 	title   string
 	comment string
+	archive string
 }
 
 func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
@@ -49,6 +52,8 @@ func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags.StringSetVar(&add.labels, 'l', "label", "add labels in order of appearance")
 	flags.StringVar(&add.title, 't', "title", "", "add custom title")
 	flags.StringVar(&add.comment, 'c', "comment", "", "add bookmark comment")
+	// Let users specify a CSS selector since every page is different.
+	flags.StringVar(&add.archive, 'a', "archive", "", "download and store the text for archival purposes")
 
 	return &ff.Command{
 		Name:      addName,
@@ -63,8 +68,10 @@ func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
 }
 
 func (add *addCmd) handle(ctx appContext, args []string) error {
+	target := parser.First(args)
+
 	b, err := model.NewBookmark(
-		parser.First(args),
+		target,
 		model.WithTitle(add.title),
 		model.WithClient(ctx.client),
 		model.WithComment(add.comment))
@@ -83,5 +90,26 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 		return err
 	}
 
+	if add.archive != "" {
+		ctx.scraper.OnHTML(add.archive, scrapeAndStore(b))
+		_ = ctx.scraper.Visit(target)
+	}
+
 	return nil
+}
+
+// Do proper error handling
+func scrapeAndStore(b *model.Bookmark) colly.HTMLCallback {
+	return func(el *colly.HTMLElement) {
+		file := path.Join(config.DataDirPath(), strings.ReplaceAll(b.Title()+".html", " ", "_"))
+		fh, _ := os.OpenFile(file, os.O_CREATE|os.O_WRONLY, config.StdFileMode)
+		_, _ = fh.Write(formatHTML(el))
+		_ = fh.Close()
+	}
+}
+
+// Fix relative path for <img> paths maybe?
+func formatHTML(el *colly.HTMLElement) []byte {
+	content, _ := el.DOM.Html()
+	return []byte(content)
 }

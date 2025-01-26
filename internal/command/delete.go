@@ -41,7 +41,7 @@ func (del *deleteCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	}
 }
 
-func (del *deleteCmd) handle(ctx appContext, _ []string) (err error) {
+func (del *deleteCmd) handle(_ appContext, _ []string) (err error) {
 	ok := output.Confirm(msgDeleteLabel)
 	if !ok {
 		return nil

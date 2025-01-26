@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"errors"
+	"github.com/gocolly/colly/v2"
 	"io/fs"
 	"net/http"
 	"os"
@@ -32,6 +33,7 @@ type appContext struct {
 	storer   storage.Storer
 	syncMode string
 	client   *http.Client
+	scraper  *colly.Collector
 }
 
 type rootCmd struct {
@@ -80,12 +82,19 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 		}
 	}()
 
+	// Configure global scraper.
+	// This might be a bad idea because the instance is shared
+	// and API has side effects like registering a callback.
+	scraper := colly.NewCollector()
+	scraper.IgnoreRobotsTxt = true
+
 	// Initialize appContext with sensible defaults.
 	appCtx := appContext{
 		Context:  ctx,
 		kind:     storage.Local,
 		syncMode: "always",
 		client:   &http.Client{Timeout: config.StdHttpTimeout},
+		scraper:  scraper,
 	}
 
 	// Config file might not exist, ignore errors if so.

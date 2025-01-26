@@ -43,7 +43,7 @@ func (imp *importCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	}
 }
 
-func (*importCmd) handle(ctx appContext, args []string) error {
+func (*importCmd) handle(_ appContext, args []string) error {
 	if len(args) == 0 {
 		return ErrInvalidImportFile
 	}
