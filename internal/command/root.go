@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/gocolly/colly/v2"
+	"html/template"
 	"io/fs"
 	"net/http"
 	"os"
@@ -34,6 +35,7 @@ type appContext struct {
 	syncMode string
 	client   *http.Client
 	scraper  *colly.Collector
+	template *template.Template
 }
 
 type rootCmd struct {
@@ -88,6 +90,9 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 	scraper := colly.NewCollector()
 	scraper.IgnoreRobotsTxt = true
 
+	// Configure global HTML template.
+	tmpl, _ := template.New("root").Parse("<div>{{.}}</div>")
+
 	// Initialize appContext with sensible defaults.
 	appCtx := appContext{
 		Context:  ctx,
@@ -95,6 +100,7 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 		syncMode: "always",
 		client:   &http.Client{Timeout: config.StdHttpTimeout},
 		scraper:  scraper,
+		template: tmpl,
 	}
 
 	// Config file might not exist, ignore errors if so.

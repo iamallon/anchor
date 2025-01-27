@@ -9,6 +9,7 @@ import (
 	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/peterbourgon/ff/v4"
+	"html/template"
 	"os"
 	"path"
 	"strings"
@@ -91,7 +92,7 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 	}
 
 	if add.archive != "" {
-		ctx.scraper.OnHTML(add.archive, scrapeAndStore(b))
+		ctx.scraper.OnHTML(add.archive, scrapeAndStore(b, ctx.template))
 		_ = ctx.scraper.Visit(target)
 	}
 
@@ -99,17 +100,12 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 }
 
 // Do proper error handling
-func scrapeAndStore(b *model.Bookmark) colly.HTMLCallback {
+func scrapeAndStore(b *model.Bookmark, tmpl *template.Template) colly.HTMLCallback {
 	return func(el *colly.HTMLElement) {
 		file := path.Join(config.DataDirPath(), strings.ReplaceAll(b.Title()+".html", " ", "_"))
 		fh, _ := os.OpenFile(file, os.O_CREATE|os.O_WRONLY, config.StdFileMode)
-		_, _ = fh.Write(formatHTML(el))
+		content, _ := el.DOM.Html()
+		_ = tmpl.Execute(fh, template.HTML(content))
 		_ = fh.Close()
 	}
-}
-
-// Fix relative path for <img> paths maybe?
-func formatHTML(el *colly.HTMLElement) []byte {
-	content, _ := el.DOM.Html()
-	return []byte(content)
 }
