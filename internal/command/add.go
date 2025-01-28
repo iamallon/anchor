@@ -3,16 +3,17 @@ package command
 import (
 	"context"
 	"errors"
+	"html/template"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/gocolly/colly/v2"
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
 	"github.com/loghinalexandru/anchor/internal/command/util/parser"
 	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/peterbourgon/ff/v4"
-	"html/template"
-	"os"
-	"path"
-	"strings"
 )
 
 const (
@@ -45,7 +46,7 @@ type addCmd struct {
 	labels  []string
 	title   string
 	comment string
-	archive string
+	expr    string
 }
 
 func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
@@ -54,7 +55,7 @@ func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags.StringVar(&add.title, 't', "title", "", "add custom title")
 	flags.StringVar(&add.comment, 'c', "comment", "", "add bookmark comment")
 	// Let users specify a CSS selector since every page is different.
-	flags.StringVar(&add.archive, 'a', "archive", "", "download and store the text for archival purposes")
+	flags.StringVar(&add.expr, 'e', "expr", "", "add a CSS style selector to scrape the bookmark")
 
 	return &ff.Command{
 		Name:      addName,
@@ -91,8 +92,8 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 		return err
 	}
 
-	if add.archive != "" {
-		ctx.scraper.OnHTML(add.archive, scrapeAndStore(b, ctx.template))
+	if add.expr != "" {
+		ctx.scraper.OnHTML(add.expr, scrapeAndStore(b, ctx.template))
 		_ = ctx.scraper.Visit(target)
 	}
 
@@ -100,6 +101,7 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 }
 
 // Do proper error handling
+// Fix broken <img> links
 func scrapeAndStore(b *model.Bookmark, tmpl *template.Template) colly.HTMLCallback {
 	return func(el *colly.HTMLElement) {
 		file := path.Join(config.DataDirPath(), strings.ReplaceAll(b.Title()+".html", " ", "_"))

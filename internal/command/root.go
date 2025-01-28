@@ -3,12 +3,14 @@ package command
 import (
 	"context"
 	"errors"
-	"github.com/gocolly/colly/v2"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/gocolly/colly/v2"
 	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/output"
 	"github.com/loghinalexandru/anchor/internal/storage"
@@ -91,7 +93,14 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 	scraper.IgnoreRobotsTxt = true
 
 	// Configure global HTML template.
-	tmpl, _ := template.New("root").Parse("<div>{{.}}</div>")
+	style := []string{
+		"max-width: 40em",
+		"margin-right: 10%",
+		"margin-left: 10%",
+		"margin-top:7%",
+		"margin-bottom: 7%",
+	}
+	tmpl, _ := template.New("root").Parse(fmt.Sprintf(`<div style="%s;">{{.}}</div>`, strings.Join(style, ";")))
 
 	// Initialize appContext with sensible defaults.
 	appCtx := appContext{
