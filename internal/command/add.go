@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"html/template"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -93,21 +94,31 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 	}
 
 	if add.expr != "" {
-		ctx.scraper.OnHTML(add.expr, scrapeAndStore(b, ctx.template))
-		_ = ctx.scraper.Visit(target)
+		_ = scrapeAndStore(add.expr, b, ctx)
 	}
 
 	return nil
 }
 
 // Do proper error handling
-// Fix broken <img> links
-func scrapeAndStore(b *model.Bookmark, tmpl *template.Template) colly.HTMLCallback {
-	return func(el *colly.HTMLElement) {
+func scrapeAndStore(expr string, b *model.Bookmark, ctx appContext) error {
+	ctx.scraper.OnHTML("img", func(el *colly.HTMLElement) {
+		val, _ := el.DOM.Attr("src")
+		src, _ := url.Parse(val)
+		if src.IsAbs() {
+			return
+		}
+		absolute, _ := url.JoinPath(b.URL(), src.String())
+		el.DOM.SetAttr("src", absolute)
+	})
+
+	ctx.scraper.OnHTML(expr, func(el *colly.HTMLElement) {
 		file := path.Join(config.DataDirPath(), strings.ReplaceAll(b.Title()+".html", " ", "_"))
 		fh, _ := os.OpenFile(file, os.O_CREATE|os.O_WRONLY, config.StdFileMode)
 		content, _ := el.DOM.Html()
-		_ = tmpl.Execute(fh, template.HTML(content))
+		_ = ctx.template.Execute(fh, template.HTML(content))
 		_ = fh.Close()
-	}
+	})
+
+	return ctx.scraper.Visit(b.URL())
 }
