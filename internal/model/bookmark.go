@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -18,6 +20,7 @@ var (
 )
 
 type Bookmark struct {
+	id      uuid.UUID
 	title   string
 	url     string
 	comment string
@@ -30,8 +33,10 @@ func NewBookmark(rawURL string, opts ...func(*Bookmark)) (*Bookmark, error) {
 		return nil, err
 	}
 
+	id, _ := uuid.NewV7()
 	res := &Bookmark{
 		url:    rawURL,
+		id:     id,
 		client: http.DefaultClient,
 	}
 
@@ -44,6 +49,14 @@ func NewBookmark(rawURL string, opts ...func(*Bookmark)) (*Bookmark, error) {
 	}
 
 	return res, nil
+}
+
+func WithId(id string) func(*Bookmark) {
+	return func(b *Bookmark) {
+		if id != "" {
+			b.id, _ = uuid.Parse(id)
+		}
+	}
 }
 
 func WithTitle(title string) func(*Bookmark) {
@@ -96,7 +109,12 @@ func BookmarkLine(line string) (*Bookmark, error) {
 		comment, _ = strconv.Unquote(parts[2])
 	}
 
-	return NewBookmark(rawURL, WithTitle(name), WithComment(comment))
+	var id string
+	if len(parts) > 3 {
+		id, _ = strconv.Unquote(parts[3])
+	}
+
+	return NewBookmark(rawURL, WithId(id), WithTitle(name), WithComment(comment))
 }
 
 var titleRegexp = regexp.MustCompile(`<title>(?P<title>.+?)</title>`)
@@ -135,7 +153,7 @@ func (b *Bookmark) fetchTitle() string {
 }
 
 func (b *Bookmark) String() string {
-	return fmt.Sprintf("%q %q %q\n", b.title, b.url, b.comment)
+	return fmt.Sprintf("%q %q %q %q\n", b.title, b.url, b.comment, b.id)
 }
 
 func (b *Bookmark) Write(rw io.ReadWriteSeeker) error {
@@ -176,6 +194,10 @@ func (b *Bookmark) Description() string {
 
 func (b *Bookmark) URL() string {
 	return b.url
+}
+
+func (b *Bookmark) Id() string {
+	return b.id.String()
 }
 
 func (b *Bookmark) FilterValue() string {
