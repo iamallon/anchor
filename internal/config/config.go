@@ -31,3 +31,7 @@ func SettingsFilePath() string {
 func DataDirPath() string {
 	return filepath.Join(xdg.DataHome, StdDirName, "data")
 }
+
+func ArchiveDirPath() string {
+	return filepath.Join(xdg.DataHome, StdDirName, "archive")
+}
