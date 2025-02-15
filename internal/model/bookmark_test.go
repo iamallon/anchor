@@ -92,23 +92,26 @@ func TestString(t *testing.T) {
 	tsc := []struct {
 		title string
 		url   string
+		id    string
 		want  string
 	}{
 		{
 			title: "Test Title",
+			id:    "0195092a-721f-781e-b711-1118cd6d6433",
 			url:   "https://google.com",
-			want:  "\"Test Title\" \"https://google.com\" \"\"\n",
+			want:  "\"Test Title\" \"https://google.com\" \"\" \"0195092a-721f-781e-b711-1118cd6d6433\"\n",
 		},
 		{
 			title: `Test "Title" "Test Title Two`,
+			id:    "0195092a-ba98-7099-8217-49eb146a6c97",
 			url:   "https://google.com",
-			want:  "\"Test \\\"Title\\\" \\\"Test Title Two\" \"https://google.com\" \"\"\n",
+			want:  "\"Test \\\"Title\\\" \\\"Test Title Two\" \"https://google.com\" \"\" \"0195092a-ba98-7099-8217-49eb146a6c97\"\n",
 		},
 	}
 
 	for _, c := range tsc {
 		t.Run(c.title, func(t *testing.T) {
-			bk, err := NewBookmark(c.url, WithTitle(c.title))
+			bk, err := NewBookmark(c.url, WithId(c.id), WithTitle(c.title))
 			if err != nil {
 				t.Fatalf("unexpected error; got %q", err)
 			}
@@ -177,9 +180,10 @@ func TestWrite(t *testing.T) {
 		t.Fatalf("unexpected error; got %q", err)
 	}
 
+	id := "01950975-fa76-7afc-b1e2-16255225c5d0"
 	title := "test-title \\n \"test\" asd"
-	want := "\"test-title \\\\n \\\"test\\\" asd\" \"https://google.com\" \"\"\n"
-	bk, err := NewBookmark("https://google.com", WithTitle(title))
+	want := "\"test-title \\\\n \\\"test\\\" asd\" \"https://google.com\" \"\" \"01950975-fa76-7afc-b1e2-16255225c5d0\"\n"
+	bk, err := NewBookmark("https://google.com", WithId(id), WithTitle(title))
 	if err != nil {
 		t.Fatalf("unexpected error; got %q", err)
 	}
