@@ -22,7 +22,7 @@ const (
 var (
 	quitKey    = key.NewBinding(key.WithKeys("esc", "q"))
 	confirmKey = key.NewBinding(key.WithKeys("enter", " "))
-	archiveKey = key.NewBinding(key.WithKeys("a", "v"))
+	archiveKey = key.NewBinding(key.WithKeys("a"))
 	delKey     = key.NewBinding(key.WithKeys("d", "delete"))
 	renameKey  = key.NewBinding(key.WithKeys("r"))
 	startKey   = key.NewBinding(key.WithKeys("home"))

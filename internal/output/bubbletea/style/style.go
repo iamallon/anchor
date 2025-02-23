@@ -42,11 +42,14 @@ func ApplyToList(title string, list *list.Model) {
 	list.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 	list.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
+	// This is duplicated in the commands as well. Need to move
+	// in a central config place maybe.
 	list.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
 			key.NewBinding(key.WithKeys("enter", "space"), key.WithHelp("enter", "open")),
 			key.NewBinding(key.WithKeys("delete", "d"), key.WithHelp("d/del", "delete")),
 			key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
+			key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "archive")),
 		}
 	}
 
@@ -55,6 +58,7 @@ func ApplyToList(title string, list *list.Model) {
 			key.NewBinding(key.WithKeys("enter", "space"), key.WithHelp("enter/space", "open in browser")),
 			key.NewBinding(key.WithKeys("delete", "d"), key.WithHelp("d/del", "remove bookmark")),
 			key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename bookmark")),
+			key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "view archived page")),
 		}
 	}
 }
