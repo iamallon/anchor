@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"net/url"
 	"os"
-	"path/filepath"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
@@ -111,7 +110,7 @@ func scrapeAndStore(expr string, b *model.Bookmark, ctx appContext) error {
 		el.DOM.SetAttr("src", absolute)
 	})
 
-	filePath := filepath.Join(config.ArchiveDirPath(), b.Id()+".html")
+	filePath := config.ArchiveFilePath(b.Id())
 	ctx.scraper.OnHTML(expr, func(el *colly.HTMLElement) {
 		fh, _ := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, config.StdFileMode)
 		content, _ := el.DOM.Html()

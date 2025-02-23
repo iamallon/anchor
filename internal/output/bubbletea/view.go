@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/loghinalexandru/anchor/internal/output/bubbletea/style"
 )
@@ -21,6 +22,7 @@ const (
 var (
 	quitKey    = key.NewBinding(key.WithKeys("esc", "q"))
 	confirmKey = key.NewBinding(key.WithKeys("enter", " "))
+	archiveKey = key.NewBinding(key.WithKeys("a", "v"))
 	delKey     = key.NewBinding(key.WithKeys("d", "delete"))
 	renameKey  = key.NewBinding(key.WithKeys("r"))
 	startKey   = key.NewBinding(key.WithKeys("home"))
@@ -137,6 +139,8 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 	}
 
 	switch {
+	case key.Matches(msg, archiveKey):
+		_ = open("file://" + config.ArchiveFilePath(item.Id()))
 	case key.Matches(msg, confirmKey):
 		_ = open(item.URL())
 	case key.Matches(msg, delKey):

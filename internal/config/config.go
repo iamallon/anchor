@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
+	"github.com/google/uuid"
 )
 
 const (
@@ -34,4 +35,8 @@ func DataDirPath() string {
 
 func ArchiveDirPath() string {
 	return filepath.Join(xdg.DataHome, StdDirName, "archive")
+}
+
+func ArchiveFilePath(id uuid.UUID) string {
+	return filepath.Join(ArchiveDirPath(), id.String()+".html")
 }

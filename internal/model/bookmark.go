@@ -196,8 +196,8 @@ func (b *Bookmark) URL() string {
 	return b.url
 }
 
-func (b *Bookmark) Id() string {
-	return b.id.String()
+func (b *Bookmark) Id() uuid.UUID {
+	return b.id
 }
 
 func (b *Bookmark) FilterValue() string {
