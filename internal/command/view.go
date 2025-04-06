@@ -27,10 +27,10 @@ const (
 
 EXAMPLES
   # View bookmarks under label "programming"
-  anchor view -l programming
+  anchor view programming
 
   # View bookmarks with sub-label "go" under label "programming"
-  anchor view -l programming -l go
+  anchor view programming go
 `
 )
 
@@ -38,13 +38,10 @@ const (
 	msgApplyChanges = "You are about to apply changes from previous operation. Proceed?"
 )
 
-type viewCmd struct {
-	labels []string
-}
+type viewCmd struct{}
 
 func (v *viewCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags := ff.NewFlagSet("view").SetParent(parent)
-	flags.StringSetVar(&v.labels, 'l', "label", "specify label hierarchy")
 
 	return &ff.Command{
 		Name:      viewName,
@@ -58,8 +55,8 @@ func (v *viewCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	}
 }
 
-func (v *viewCmd) handle(ctx appContext, _ []string) (err error) {
-	fh, err := label.OpenFuzzy(config.DataDirPath(), v.labels, os.O_RDWR)
+func (v *viewCmd) handle(ctx appContext, args []string) (err error) {
+	fh, err := label.OpenFuzzy(config.DataDirPath(), args, os.O_RDWR)
 	if err != nil {
 		return err
 	}

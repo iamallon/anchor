@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"html/template"
-	"net/url"
 	"os"
 
 	"github.com/gocolly/colly/v2"
@@ -31,13 +30,16 @@ const (
 
   You can also provider a comment via the flag -c for the bookmark instead of the default URL that is specified. 
 
+  If you wish to store locally the target page you can specify the -e flag with a CSS style expression
+  and it will fetch and store a simplified version of the page locally.
 EXAMPLES
   # Append to default label
   anchor add "https://www.youtube.com/"
 
   # Append to a label "programming" with a sub-label "go"
   anchor add -l programming -l go "https://gobyexample.com/"
-  anchor add -l go "https://go.dev/ref/spec" -c "GO: Language Spec"
+  anchor add -l go -c "GO: Language Spec" "https://go.dev/ref/spec"
+  anchor add -l go -e ".content" "https://go.dev/ref/spec"
 `
 )
 
@@ -53,7 +55,6 @@ func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags.StringSetVar(&add.labels, 'l', "label", "add labels in order of appearance")
 	flags.StringVar(&add.title, 't', "title", "", "add custom title")
 	flags.StringVar(&add.comment, 'c', "comment", "", "add bookmark comment")
-	// Let users specify a CSS selector since every page is different.
 	flags.StringVar(&add.expr, 'e', "expr", "", "add a CSS style selector to scrape the bookmark")
 
 	return &ff.Command{
@@ -92,31 +93,35 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 	}
 
 	if add.expr != "" {
-		_ = scrapeAndStore(add.expr, b, ctx)
+
+		filePath := config.ArchiveFilePath(b.Id())
+		fh, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, config.StdFileMode)
+		if err != nil {
+			return err
+		}
+
+		// Need to add conditional remove for the targets that
+		// can not be used (relative <src>, <img> etc.).
+		ctx.scraper.OnHTML("img", remove)
+		ctx.scraper.OnHTML(add.expr, func(el *colly.HTMLElement) {
+			content, _ := el.DOM.Html()
+			err = ctx.template.Execute(fh, template.HTML(content))
+		})
+
+		err = ctx.scraper.Visit(b.URL())
+		if err != nil {
+			return err
+		}
+
+		errors.Join(err, fh.Close())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// Do proper error handling
-func scrapeAndStore(expr string, b *model.Bookmark, ctx appContext) error {
-	ctx.scraper.OnHTML("img", func(el *colly.HTMLElement) {
-		val, _ := el.DOM.Attr("src")
-		src, _ := url.Parse(val)
-		if src.IsAbs() {
-			return
-		}
-		absolute, _ := url.JoinPath(b.URL(), src.String())
-		el.DOM.SetAttr("src", absolute)
-	})
-
-	filePath := config.ArchiveFilePath(b.Id())
-	ctx.scraper.OnHTML(expr, func(el *colly.HTMLElement) {
-		fh, _ := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, config.StdFileMode)
-		content, _ := el.DOM.Html()
-		_ = ctx.template.Execute(fh, template.HTML(content))
-		_ = fh.Close()
-	})
-
-	return ctx.scraper.Visit(b.URL())
+func remove(el *colly.HTMLElement) {
+	el.DOM.Remove()
 }
