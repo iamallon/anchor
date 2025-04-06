@@ -28,7 +28,7 @@ const (
   to do so, it will store the entry with same title as the URL. You can provide a specific
   title with the flag -t and it overwrites the behaviour mentioned above.
 
-  You can also provider a comment via the flag -c for the bookmark instead of the default URL that is specified. 
+  You can also provide a comment via the flag -c for the bookmark instead of the default URL that is specified. 
 
   If you wish to store locally the target page you can specify the -e flag with a CSS style expression
   and it will fetch and store a simplified version of the page locally.

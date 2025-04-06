@@ -21,13 +21,10 @@ const (
 	msgDeleteLabel = "You are about to delete the label and associated bookmarks. Proceed?"
 )
 
-type deleteCmd struct {
-	labels []string
-}
+type deleteCmd struct{}
 
 func (del *deleteCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags := ff.NewFlagSet("delete").SetParent(parent)
-	flags.StringSetVar(&del.labels, 'l', "label", "add label in order of appearance")
 
 	return &ff.Command{
 		Name:      deleteName,
@@ -41,11 +38,11 @@ func (del *deleteCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	}
 }
 
-func (del *deleteCmd) handle(_ appContext, _ []string) (err error) {
+func (del *deleteCmd) handle(_ appContext, args []string) (err error) {
 	ok := output.Confirm(msgDeleteLabel)
 	if !ok {
 		return nil
 	}
 
-	return label.Remove(config.DataDirPath(), del.labels)
+	return label.Remove(config.DataDirPath(), args)
 }
