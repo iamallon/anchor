@@ -46,7 +46,7 @@ func (init *initCmd) manifest(parent *ff.FlagSet) *ff.Command {
 func (init *initCmd) handle(ctx appContext, args []string) error {
 	path := config.ArchiveDirPath()
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err = os.Mkdir(path, os.ModePerm)
+		err = os.MkdirAll(path, os.ModePerm)
 		if err != nil {
 			return err
 		}

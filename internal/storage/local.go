@@ -17,7 +17,7 @@ func newLocalStorage(path string) *localStorage {
 
 func (l *localStorage) Init(_ ...string) error {
 	if _, err := os.Stat(l.path); os.IsNotExist(err) {
-		err = os.Mkdir(l.path, os.ModePerm)
+		err = os.MkdirAll(l.path, os.ModePerm)
 		if err != nil {
 			return err
 		}
