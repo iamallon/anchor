@@ -114,7 +114,7 @@ func (v *viewCmd) handle(ctx appContext, args []string) (err error) {
 
 	for _, a := range view.Actions() {
 		switch a.Operation {
-		case bubbletea.Del:
+		case bubbletea.Delete:
 			// Explicitly ignore if there is a remove error.
 			_ = os.Remove(config.ArchiveFilePath(a.Target))
 		}

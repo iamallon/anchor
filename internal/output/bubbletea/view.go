@@ -33,8 +33,8 @@ var (
 type operation int
 
 const (
-	Void operation = iota
-	Del
+	Nop operation = iota
+	Delete
 )
 
 type action struct {
@@ -164,7 +164,7 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 	case key.Matches(msg, delKey):
 		var cmd tea.Cmd
 		v.actions = append(v.actions, action{
-			Operation: Del,
+			Operation: Delete,
 			Target:    v.bookmarks.SelectedItem().(*model.Bookmark).Id(),
 		})
 
