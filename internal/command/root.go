@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gocolly/colly/v2"
 	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/output"
 	"github.com/loghinalexandru/anchor/internal/storage"
@@ -36,7 +35,6 @@ type appContext struct {
 	storer   storage.Storer
 	syncMode string
 	client   *http.Client
-	scraper  *colly.Collector
 	template *template.Template
 }
 
@@ -86,12 +84,6 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 		}
 	}()
 
-	// Configure global scraper.
-	// This might be a bad idea because the instance is shared
-	// and API has side effects like registering a callback.
-	scraper := colly.NewCollector()
-	scraper.IgnoreRobotsTxt = true
-
 	// Configure global HTML template.
 	style := []string{
 		"max-width: 40em",
@@ -108,7 +100,6 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 		kind:     storage.Local,
 		syncMode: "always",
 		client:   &http.Client{Timeout: config.StdHttpTimeout},
-		scraper:  scraper,
 		template: tmpl,
 	}
 

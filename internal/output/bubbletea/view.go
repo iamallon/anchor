@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/uuid"
 	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/loghinalexandru/anchor/internal/output/bubbletea/style"
@@ -29,9 +30,22 @@ var (
 	endKey     = key.NewBinding(key.WithKeys("end"))
 )
 
+type operation int
+
+const (
+	Void operation = iota
+	Del
+)
+
+type action struct {
+	Target    uuid.UUID
+	Operation operation
+}
+
 type View struct {
 	input     textinput.Model
 	bookmarks list.Model
+	actions   []action
 	dirty     bool
 }
 
@@ -60,6 +74,10 @@ func (v *View) Bookmarks() []*model.Bookmark {
 	}
 
 	return res
+}
+
+func (v *View) Actions() []action {
+	return v.actions
 }
 
 func (v *View) Dirty() bool {
@@ -145,6 +163,11 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 		_ = open(item.URL())
 	case key.Matches(msg, delKey):
 		var cmd tea.Cmd
+		v.actions = append(v.actions, action{
+			Operation: Del,
+			Target:    v.bookmarks.SelectedItem().(*model.Bookmark).Id(),
+		})
+
 		items := slices.DeleteFunc(v.bookmarks.Items(), func(item list.Item) bool {
 			return item == v.bookmarks.SelectedItem()
 		})

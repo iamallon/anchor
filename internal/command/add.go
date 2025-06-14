@@ -3,10 +3,11 @@ package command
 import (
 	"context"
 	"errors"
+	"fmt"
 	"html/template"
 	"os"
 
-	"github.com/gocolly/colly/v2"
+	readability "github.com/go-shiori/go-readability"
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
 	"github.com/loghinalexandru/anchor/internal/command/util/parser"
 	"github.com/loghinalexandru/anchor/internal/config"
@@ -39,7 +40,7 @@ EXAMPLES
   # Append to a label "programming" with a sub-label "go"
   anchor add -l programming -l go "https://gobyexample.com/"
   anchor add -l go -c "GO: Language Spec" "https://go.dev/ref/spec"
-  anchor add -l go -e ".content" "https://go.dev/ref/spec"
+  anchor add -l go -a "https://go.dev/ref/spec"
 `
 )
 
@@ -47,7 +48,7 @@ type addCmd struct {
 	labels  []string
 	title   string
 	comment string
-	expr    string
+	archive bool
 }
 
 func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
@@ -55,7 +56,7 @@ func (add *addCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags.StringSetVar(&add.labels, 'l', "label", "add labels in order of appearance")
 	flags.StringVar(&add.title, 't', "title", "", "add custom title")
 	flags.StringVar(&add.comment, 'c', "comment", "", "add bookmark comment")
-	flags.StringVar(&add.expr, 'e', "expr", "", "add a CSS style selector to scrape the bookmark")
+	flags.BoolVar(&add.archive, 'a', "archive", "store a local copy")
 
 	return &ff.Command{
 		Name:      addName,
@@ -92,27 +93,19 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 		return err
 	}
 
-	if add.expr != "" {
-
+	if add.archive {
 		filePath := config.ArchiveFilePath(b.Id())
 		fh, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, config.StdFileMode)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not open file, make sure you run the `init` command first")
 		}
 
-		// Need to add conditional remove for the targets that
-		// can not be used (relative <src>, <img> etc.).
-		ctx.scraper.OnHTML("img", remove)
-		ctx.scraper.OnHTML(add.expr, func(el *colly.HTMLElement) {
-			content, _ := el.DOM.Html()
-			err = ctx.template.Execute(fh, template.HTML(content))
-		})
-
-		err = ctx.scraper.Visit(b.URL())
+		content, err := readability.FromURL(b.URL(), config.StdHttpTimeout)
 		if err != nil {
 			return err
 		}
 
+		err = ctx.template.Execute(fh, template.HTML(content.Content))
 		errors.Join(err, fh.Close())
 		if err != nil {
 			return err
@@ -120,8 +113,4 @@ func (add *addCmd) handle(ctx appContext, args []string) error {
 	}
 
 	return nil
-}
-
-func remove(el *colly.HTMLElement) {
-	el.DOM.Remove()
 }
