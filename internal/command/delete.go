@@ -18,7 +18,7 @@ const (
 )
 
 const (
-	msgDeleteLabel = "You are about to delete the label and associated bookmarks. Proceed?"
+	msgDeleteLabel = "You are about to delete the label and associated items. Proceed?"
 )
 
 type deleteCmd struct{}
