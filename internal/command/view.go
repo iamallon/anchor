@@ -20,16 +20,16 @@ import (
 
 const (
 	viewName      = "view"
-	viewUsage     = "anchor view [FLAGS]"
+	viewUsage     = "anchor view [LABEL]"
 	viewShortHelp = "view and edit existing bookmarks"
-	viewLongHelp  = `  This command will open up the interactive TUI that can view/edit each individual bookmark.
+	viewLongHelp  = `  This command will open up the interactive TUI that can view/edit each individual bookmark stored with [LABEL].
   Prompts for confirmation for any change on exit.
 
 EXAMPLES
   # View bookmarks under label "programming"
   anchor view programming
 
-  # View bookmarks with sub-label "go" under label "programming"
+  # View bookmarks with sub-label "go" under parent label "programming"
   anchor view programming go
 `
 )

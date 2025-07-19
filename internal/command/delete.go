@@ -11,9 +11,9 @@ import (
 
 const (
 	deleteName      = "delete"
-	deleteUsage     = "anchor delete [FLAGS]"
-	deleteShortHelp = "remove all bookmarks under specified labels"
-	deleteLongHelp  = `  Performs a bulk delete on all the bookmarks under the specified labels.
+	deleteUsage     = "anchor delete [LABEL]"
+	deleteShortHelp = "remove everything related to specified [LABEL]"
+	deleteLongHelp  = `  Performs a bulk delete on the local storage for all the files/archives stored with [LABEL].
   Prompts for confirmation before deleting.`
 )
 

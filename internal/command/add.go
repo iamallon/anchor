@@ -17,7 +17,7 @@ import (
 
 const (
 	addName      = "add"
-	addUsage     = "anchor add [FLAGS]"
+	addUsage     = "anchor add [FLAGS] <URL>"
 	addShortHelp = "append a bookmark entry with set labels"
 	addLongHelp  = `  Append a bookmark to a file on the backing storage determined by the 
   flatten hierarchy of the provided labels. Order of the flags matter when storing the entry.
@@ -33,6 +33,7 @@ const (
 
   If you wish to store locally the target page you can specify the -e flag with a CSS style expression
   and it will fetch and store a simplified version of the page locally.
+
 EXAMPLES
   # Append to default label
   anchor add "https://www.youtube.com/"
