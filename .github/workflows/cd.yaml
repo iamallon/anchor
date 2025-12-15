@@ -28,6 +28,11 @@ jobs:
     - name: Zip for darwin/amd64
       run: tar -cvzf "anchor${{ github.ref_name }}_darwin-amd64.tar.gz" README.md LICENSE -C darwin-amd64 anchor
 
+    - name: Build for darwin/arm64
+      run: env CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o darwin-arm64/anchor -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
+    - name: Zip for darwin/arm64
+      run: tar -cvzf "anchor${{ github.ref_name }}_darwin-arm64.tar.gz" README.md LICENSE -C darwin-arm64 anchor
+
     - name: Build for linux/amd64
       run: env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o linux-amd64/anchor -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
     - name: Zip for linux/amd64
