@@ -2,28 +2,41 @@ package config
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"time"
+
+	"github.com/adrg/xdg"
+	"github.com/google/uuid"
 )
 
 const (
-	StdDirName        = ".anchor"
-	StdConfigPath     = ".config/anchor/anchor.yaml"
+	StdDirName        = "anchor"
 	StdStorageKey     = "storage"
 	StdSyncModeKey    = "sync"
 	StdHttpTimeout    = 3 * time.Second
-	StdLocationKey    = "path"
 	StdSyncMsg        = "Sync bookmarks"
 	StdFileMode       = os.FileMode(0o666)
 	StdLabel          = "root"
 	StdLabelSeparator = "."
 )
 
-func Filepath() string {
-	home, err := os.UserHomeDir()
+func SettingsFilePath() string {
+	config, err := xdg.ConfigFile(filepath.Join(StdDirName, "config.yaml"))
 	if err != nil {
 		panic("Cannot open config path")
 	}
 
-	return path.Join(home, StdConfigPath)
+	return config
+}
+
+func DataDirPath() string {
+	return filepath.Join(xdg.DataHome, StdDirName, "data")
+}
+
+func ArchiveDirPath() string {
+	return filepath.Join(xdg.DataHome, StdDirName, "archive")
+}
+
+func ArchiveFilePath(id uuid.UUID) string {
+	return filepath.Join(ArchiveDirPath(), id.String()+".html")
 }

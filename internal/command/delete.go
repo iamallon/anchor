@@ -4,29 +4,27 @@ import (
 	"context"
 
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/output"
 	"github.com/peterbourgon/ff/v4"
 )
 
 const (
 	deleteName      = "delete"
-	deleteUsage     = "anchor delete [FLAGS]"
-	deleteShortHelp = "remove all bookmarks under specified labels"
-	deleteLongHelp  = `  Performs a bulk delete on all the bookmarks under the specified labels.
+	deleteUsage     = "anchor delete [LABEL]"
+	deleteShortHelp = "remove everything related to specified [LABEL]"
+	deleteLongHelp  = `  Performs a bulk delete on the local storage for all the files/archives stored with [LABEL].
   Prompts for confirmation before deleting.`
 )
 
 const (
-	msgDeleteLabel = "You are about to delete the label and associated bookmarks. Proceed?"
+	msgDeleteLabel = "You are about to delete the label and associated items. Proceed?"
 )
 
-type deleteCmd struct {
-	labels []string
-}
+type deleteCmd struct{}
 
 func (del *deleteCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags := ff.NewFlagSet("delete").SetParent(parent)
-	flags.StringSetVar(&del.labels, 'l', "label", "add label in order of appearance")
 
 	return &ff.Command{
 		Name:      deleteName,
@@ -40,11 +38,11 @@ func (del *deleteCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	}
 }
 
-func (del *deleteCmd) handle(ctx appContext, _ []string) (err error) {
+func (del *deleteCmd) handle(_ appContext, args []string) (err error) {
 	ok := output.Confirm(msgDeleteLabel)
 	if !ok {
 		return nil
 	}
 
-	return label.Remove(ctx.path, del.labels)
+	return label.Remove(config.DataDirPath(), args)
 }

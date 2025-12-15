@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/loghinalexandru/anchor/internal/command/util/label"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/loghinalexandru/anchor/internal/output"
 	"github.com/loghinalexandru/anchor/internal/output/bubbletea"
@@ -19,17 +20,17 @@ import (
 
 const (
 	viewName      = "view"
-	viewUsage     = "anchor view [FLAGS]"
+	viewUsage     = "anchor view [LABEL]"
 	viewShortHelp = "view and edit existing bookmarks"
-	viewLongHelp  = `  This command will open up the interactive TUI that can view/edit each individual bookmark.
+	viewLongHelp  = `  This command will open up the interactive TUI that can view/edit each individual bookmark stored with [LABEL].
   Prompts for confirmation for any change on exit.
 
 EXAMPLES
   # View bookmarks under label "programming"
-  anchor view -l programming
+  anchor view programming
 
-  # View bookmarks with sub-label go under label "programming"
-  anchor view -l programming -l go
+  # View bookmarks with sub-label "go" under parent label "programming"
+  anchor view programming go
 `
 )
 
@@ -37,13 +38,10 @@ const (
 	msgApplyChanges = "You are about to apply changes from previous operation. Proceed?"
 )
 
-type viewCmd struct {
-	labels []string
-}
+type viewCmd struct{}
 
 func (v *viewCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	flags := ff.NewFlagSet("view").SetParent(parent)
-	flags.StringSetVar(&v.labels, 'l', "label", "specify label hierarchy")
 
 	return &ff.Command{
 		Name:      viewName,
@@ -57,8 +55,8 @@ func (v *viewCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	}
 }
 
-func (v *viewCmd) handle(ctx appContext, _ []string) (err error) {
-	fh, err := label.OpenFuzzy(ctx.path, v.labels, os.O_RDWR)
+func (v *viewCmd) handle(ctx appContext, args []string) (err error) {
+	fh, err := label.OpenFuzzy(config.DataDirPath(), args, os.O_RDWR)
 	if err != nil {
 		return err
 	}
@@ -85,12 +83,15 @@ func (v *viewCmd) handle(ctx appContext, _ []string) (err error) {
 	}
 
 	view := state.(*bubbletea.View)
+	if !view.Dirty() {
+		return nil
+	}
+
 	confirmer := output.Confirmer{
 		MaxRetries: 3,
 		Renderer:   style.Prompt,
 	}
-
-	if view.Dirty() && !confirmer.Confirm(msgApplyChanges, os.Stdin, os.Stdout) {
+	if !confirmer.Confirm(msgApplyChanges, os.Stdin, os.Stdout) {
 		return nil
 	}
 
@@ -108,6 +109,14 @@ func (v *viewCmd) handle(ctx appContext, _ []string) (err error) {
 		_, err := fh.WriteString(b.String())
 		if err != nil {
 			return err
+		}
+	}
+
+	for _, a := range view.Actions() {
+		switch a.Operation {
+		case bubbletea.Delete:
+			// Explicitly ignore if there is a remove error.
+			_ = os.Remove(config.ArchiveFilePath(a.Target))
 		}
 	}
 

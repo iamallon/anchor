@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/loghinalexandru/anchor/internal/command/util/parser"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/peterbourgon/ff/v4"
 	"github.com/virtualtam/netscape-go/v2"
 )
@@ -42,7 +43,7 @@ func (imp *importCmd) manifest(parent *ff.FlagSet) *ff.Command {
 	}
 }
 
-func (*importCmd) handle(ctx appContext, args []string) error {
+func (*importCmd) handle(_ appContext, args []string) error {
 	if len(args) == 0 {
 		return ErrInvalidImportFile
 	}
@@ -58,7 +59,7 @@ func (*importCmd) handle(ctx appContext, args []string) error {
 	}
 
 	doc, _ := netscape.Unmarshal(content)
-	err = parser.TraverseNode(ctx.path, nil, doc.Root)
+	err = parser.TraverseNode(config.DataDirPath(), nil, doc.Root)
 
 	if err != nil {
 		return err

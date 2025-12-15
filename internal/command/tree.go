@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/output/treeprint"
 	"github.com/peterbourgon/ff/v4"
 )
@@ -33,7 +34,7 @@ func (tree *treeCmd) manifest(parent *ff.FlagSet) *ff.Command {
 }
 
 func (*treeCmd) handle(ctx appContext, _ []string) error {
-	dd := os.DirFS(ctx.path)
+	dd := os.DirFS(config.DataDirPath())
 	fmt.Print(treeprint.Generate(dd))
 
 	return nil

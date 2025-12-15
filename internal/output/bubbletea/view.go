@@ -6,9 +6,12 @@ import (
 	"runtime"
 	"slices"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/uuid"
+	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/loghinalexandru/anchor/internal/output/bubbletea/style"
 )
@@ -17,9 +20,32 @@ const (
 	msgStatus = "Deleted %q"
 )
 
+var (
+	quitKey    = key.NewBinding(key.WithKeys("esc"))
+	confirmKey = key.NewBinding(key.WithKeys("enter"))
+	archiveKey = key.NewBinding(key.WithKeys("a"))
+	delKey     = key.NewBinding(key.WithKeys("d", "delete"))
+	renameKey  = key.NewBinding(key.WithKeys("r"))
+	startKey   = key.NewBinding(key.WithKeys("home"))
+	endKey     = key.NewBinding(key.WithKeys("end"))
+)
+
+type operation int
+
+const (
+	Nop operation = iota
+	Delete
+)
+
+type action struct {
+	Target    uuid.UUID
+	Operation operation
+}
+
 type View struct {
 	input     textinput.Model
 	bookmarks list.Model
+	actions   []action
 	dirty     bool
 }
 
@@ -30,8 +56,12 @@ func NewView(bookmarks []list.Item, title string) *View {
 	viewList := list.New(bookmarks, del, 0, 0)
 	style.ApplyToList(title, &viewList)
 
+	input := textinput.New()
+	input.KeyMap.LineStart = startKey
+	input.KeyMap.LineEnd = endKey
+
 	return &View{
-		input:     textinput.New(),
+		input:     input,
 		bookmarks: viewList,
 	}
 }
@@ -44,6 +74,10 @@ func (v *View) Bookmarks() []*model.Bookmark {
 	}
 
 	return res
+}
+
+func (v *View) Actions() []action {
+	return v.actions
 }
 
 func (v *View) Dirty() bool {
@@ -101,8 +135,7 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (v *View) handleInput(msg tea.KeyMsg) (textinput.Model, tea.Cmd) {
-	switch msg.String() {
-	case "enter", "esc", "q":
+	if key.Matches(msg, quitKey) || key.Matches(msg, confirmKey) {
 		item := v.bookmarks.SelectedItem().(*model.Bookmark)
 		if v.input.Value() != item.Title() {
 			item.Update(v.input.Value())
@@ -123,11 +156,18 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 		return v.bookmarks.Update(msg)
 	}
 
-	switch msg.String() {
-	case "enter", " ":
-		_ = open(item.Description())
-	case "d", "delete":
+	switch {
+	case key.Matches(msg, archiveKey):
+		_ = open("file://" + config.ArchiveFilePath(item.Id()))
+	case key.Matches(msg, confirmKey):
+		_ = open(item.URL())
+	case key.Matches(msg, delKey):
 		var cmd tea.Cmd
+		v.actions = append(v.actions, action{
+			Operation: Delete,
+			Target:    v.bookmarks.SelectedItem().(*model.Bookmark).Id(),
+		})
+
 		items := slices.DeleteFunc(v.bookmarks.Items(), func(item list.Item) bool {
 			return item == v.bookmarks.SelectedItem()
 		})
@@ -138,7 +178,7 @@ func (v *View) handleList(msg tea.KeyMsg) (list.Model, tea.Cmd) {
 		}
 
 		return v.bookmarks, cmd
-	case "r":
+	case key.Matches(msg, renameKey):
 		v.input.SetValue(item.Title())
 		v.input.Focus()
 		return v.bookmarks, textinput.Blink

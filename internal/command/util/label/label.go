@@ -1,6 +1,7 @@
 package label
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/loghinalexandru/anchor/internal/config"
+	"github.com/loghinalexandru/anchor/internal/model"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -63,6 +65,19 @@ func Remove(rootDir string, labels []string) error {
 	if err != nil {
 		return err
 	}
+
+	fh, err := os.Open(filepath.Join(rootDir, filename(labels)))
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(fh)
+	for scanner.Scan() {
+		bk, _ := model.BookmarkLine(scanner.Text())
+		_ = os.Remove(config.ArchiveFilePath(bk.Id()))
+	}
+
+	_ = fh.Close()
 
 	err = os.Remove(filepath.Join(rootDir, filename(labels)))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {

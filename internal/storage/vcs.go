@@ -2,7 +2,7 @@ package storage
 
 import (
 	"errors"
-	"fmt"
+	"slices"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -39,12 +39,21 @@ func (storage *gitStorage) Init(args ...string) error {
 		return ErrInvalidURL
 	}
 
-	fmt.Println(storage.path)
-
 	_, err := git.PlainClone(storage.path, false, &git.CloneOptions{
 		URL:  args[0],
 		Auth: storage.auth,
 	})
+
+	if err == git.ErrRepositoryAlreadyExists {
+		repo, _ := git.PlainOpen(storage.path)
+		rmts, _ := repo.Remotes()
+
+		for _, rmt := range rmts {
+			if slices.Contains(rmt.Config().URLs, args[0]) {
+				return nil
+			}
+		}
+	}
 
 	return err
 }

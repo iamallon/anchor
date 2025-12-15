@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -18,9 +20,11 @@ var (
 )
 
 type Bookmark struct {
-	title  string
-	url    string
-	client *http.Client
+	id      uuid.UUID
+	title   string
+	url     string
+	comment string
+	client  *http.Client
 }
 
 func NewBookmark(rawURL string, opts ...func(*Bookmark)) (*Bookmark, error) {
@@ -29,8 +33,10 @@ func NewBookmark(rawURL string, opts ...func(*Bookmark)) (*Bookmark, error) {
 		return nil, err
 	}
 
+	id, _ := uuid.NewV7()
 	res := &Bookmark{
 		url:    rawURL,
+		id:     id,
 		client: http.DefaultClient,
 	}
 
@@ -45,10 +51,18 @@ func NewBookmark(rawURL string, opts ...func(*Bookmark)) (*Bookmark, error) {
 	return res, nil
 }
 
+func WithId(id string) func(*Bookmark) {
+	return func(b *Bookmark) {
+		if id != "" {
+			b.id, _ = uuid.Parse(id)
+		}
+	}
+}
+
 func WithTitle(title string) func(*Bookmark) {
 	return func(b *Bookmark) {
 		if title != "" {
-			b.title = title
+			b.title = strings.TrimSpace(title)
 		}
 	}
 }
@@ -57,6 +71,14 @@ func WithClient(client *http.Client) func(*Bookmark) {
 	return func(b *Bookmark) {
 		if client != nil {
 			b.client = client
+		}
+	}
+}
+
+func WithComment(comment string) func(*Bookmark) {
+	return func(b *Bookmark) {
+		if comment != "" {
+			b.comment = strings.TrimSpace(comment)
 		}
 	}
 }
@@ -75,17 +97,24 @@ func BookmarkLine(line string) (*Bookmark, error) {
 		return !quoted && curr == ' '
 	})
 
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return nil, ErrInvalidBookmark
 	}
 
 	name, _ := strconv.Unquote(parts[0])
 	rawURL, _ := strconv.Unquote(parts[1])
 
-	return &Bookmark{
-		title: strings.TrimSpace(name),
-		url:   strings.TrimSpace(rawURL),
-	}, nil
+	var comment string
+	if len(parts) > 2 {
+		comment, _ = strconv.Unquote(parts[2])
+	}
+
+	var id string
+	if len(parts) > 3 {
+		id, _ = strconv.Unquote(parts[3])
+	}
+
+	return NewBookmark(rawURL, WithId(id), WithTitle(name), WithComment(comment))
 }
 
 var titleRegexp = regexp.MustCompile(`<title>(?P<title>.+?)</title>`)
@@ -124,7 +153,7 @@ func (b *Bookmark) fetchTitle() string {
 }
 
 func (b *Bookmark) String() string {
-	return fmt.Sprintf("%q %q\n", b.title, b.url)
+	return fmt.Sprintf("%q %q %q %q\n", b.title, b.url, b.comment, b.id)
 }
 
 func (b *Bookmark) Write(rw io.ReadWriteSeeker) error {
@@ -138,7 +167,7 @@ func (b *Bookmark) Write(rw io.ReadWriteSeeker) error {
 		return err
 	}
 
-	exp := regexp.MustCompile(fmt.Sprintf(`(?im)\s.%s.$`, regexp.QuoteMeta(b.url)))
+	exp := regexp.MustCompile(fmt.Sprintf(`(?im)\s.%s.[\s|$]`, regexp.QuoteMeta(b.url)))
 	if exp.Match(content) {
 		return fmt.Errorf("%s: %w", b.url, ErrDuplicateBookmark)
 	}
@@ -156,7 +185,19 @@ func (b *Bookmark) Title() string {
 }
 
 func (b *Bookmark) Description() string {
+	if b.comment == "" {
+		return b.url
+	}
+
+	return b.comment
+}
+
+func (b *Bookmark) URL() string {
 	return b.url
+}
+
+func (b *Bookmark) Id() uuid.UUID {
+	return b.id
 }
 
 func (b *Bookmark) FilterValue() string {

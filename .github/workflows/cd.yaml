@@ -23,23 +23,18 @@ jobs:
       with:
           go-version: 'stable'
 
-    - name: Build for darwin/arm64
-      run: env GOOS=darwin GOARCH=arm64 go build -o darwin-arm64/anchor -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
-    - name: Zip for darwin/arm64
-      run: tar -cvzf "anchor${{ github.ref_name }}_darwin-arm64.tar.gz" README.md LICENSE -C darwin-arm64 anchor
-
     - name: Build for darwin/amd64
-      run: env GOOS=darwin GOARCH=amd64 go build -o darwin-amd64/anchor -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
+      run: env CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o darwin-amd64/anchor -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
     - name: Zip for darwin/amd64
       run: tar -cvzf "anchor${{ github.ref_name }}_darwin-amd64.tar.gz" README.md LICENSE -C darwin-amd64 anchor
 
     - name: Build for linux/amd64
-      run: env GOOS=linux GOARCH=amd64 go build -o linux-amd64/anchor -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
+      run: env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o linux-amd64/anchor -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
     - name: Zip for linux/amd64
       run: tar -cvzf "anchor${{ github.ref_name }}_linux-amd64.tar.gz" README.md LICENSE -C linux-amd64 anchor
 
     - name: Build for windows/amd64
-      run: env GOOS=windows GOARCH=amd64 go build -o "windows-amd64/anchor.exe" -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
+      run: env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "windows-amd64/anchor.exe" -ldflags "-X github.com/loghinalexandru/anchor/internal/command.version=${{ github.ref_name }}" .
     - name: Zip for windows/amd64
       run: zip -j "anchor${{ github.ref_name }}_windows-amd64.zip" "windows-amd64/anchor.exe" README.md LICENSE
 

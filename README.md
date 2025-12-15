@@ -39,7 +39,7 @@ Download one of the [pre-built binaries](https://github.com/loghinalexandru/anch
 
 Prerequisites to build anchor from source:
 
-- Go 1.21 or later
+- Go 1.23 or later
 
 Build and place it under ```$GOBIN```:
 
@@ -49,12 +49,9 @@ Build and place it under ```$GOBIN```:
 
 # Storage
 
-For now by default it uses the local file system as storage. You can specify what kind of backing storage you want via a config file explained in the next section.
+For now by default it uses the local file system as storage according to the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/).
 
-Valid options:
-
-- local
-- git via ssh auth
+You can change what kind of backing storage you want via a config file explained in the next section.
 
 # Usage
 
@@ -64,11 +61,10 @@ In order to use **anchor** you first need to create a home for all your bookmark
 anchor init
 ```
 
-In order to change the default behaviour create a file under ```~/.config/anchor/anchor.yaml``` with the following config values:
+In order to change the default behaviour create a file under ```$XDG_CONFIG_HOME/anchor/config.yaml``` with the following config values:
 
 ```yaml
 storage: git # Use git as backing storage (default: local)
-path: /Users/anchor-user # Change storage path (default: ~/)
 sync: none # Change sync mode from (default: always)
 ```
 

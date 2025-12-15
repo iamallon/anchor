@@ -3,10 +3,12 @@ package command
 import (
 	"context"
 	"errors"
+	"fmt"
+	"html/template"
 	"io/fs"
 	"net/http"
 	"os"
-	"path/filepath"
+	"strings"
 
 	"github.com/loghinalexandru/anchor/internal/config"
 	"github.com/loghinalexandru/anchor/internal/output"
@@ -32,8 +34,8 @@ type appContext struct {
 	kind     storage.Kind
 	storer   storage.Storer
 	syncMode string
-	path     string
 	client   *http.Client
+	template *template.Template
 }
 
 type rootCmd struct {
@@ -71,7 +73,7 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 		return err
 	}
 
-	fh, err := os.Open(config.Filepath())
+	fh, err := os.Open(config.SettingsFilePath())
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
@@ -82,20 +84,28 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 		}
 	}()
 
+	// Configure global HTML template.
+	style := []string{
+		"max-width: 40em",
+		"margin-right: 10%",
+		"margin-left: 10%",
+		"margin-top:7%",
+		"margin-bottom: 7%",
+	}
+	tmpl, _ := template.New("root").Parse(fmt.Sprintf(`<div style="%s;">{{.}}</div>`, strings.Join(style, ";")))
+
 	// Initialize appContext with sensible defaults.
 	appCtx := appContext{
 		Context:  ctx,
 		kind:     storage.Local,
 		syncMode: "always",
-		path:     storage.Path(),
 		client:   &http.Client{Timeout: config.StdHttpTimeout},
+		template: tmpl,
 	}
 
 	// Config file might not exist, ignore errors if so.
 	_ = ffyaml.Parse(fh, func(key, value string) error {
 		switch key {
-		case config.StdLocationKey:
-			appCtx.path = filepath.Join(filepath.Clean(value), config.StdDirName)
 		case config.StdSyncModeKey:
 			appCtx.syncMode = value
 		case config.StdStorageKey:
@@ -107,7 +117,7 @@ func (root *rootCmd) handle(ctx context.Context, args []string) (err error) {
 
 	// Initialize storer after config was read to not miss
 	// any custom values e.g. path.
-	appCtx.storer = storage.New(appCtx.kind, appCtx.path)
+	appCtx.storer = storage.New(appCtx.kind)
 
 	// Add appropriate middleware for each subcommand
 	for _, c := range root.cmd.Subcommands {
